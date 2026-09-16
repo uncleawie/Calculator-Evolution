@@ -94,10 +94,19 @@
 
     upNode.onmouseover = new Function(`displayQuantumUpgradeDesc.bind(this)(${i})`);
     upNode.onmouseout = new Function(`hideQuantumUpgradeDesc()`);
+    // touch: tap an upgrade to show its description (the tap itself still buys,
+    // via the existing mousedown handler — so no preventDefault here)
+    upNode.addEventListener('touchstart', new Function(`displayQuantumUpgradeDesc.bind(this)(${i})`));
 
     upNode.onmousedown = new Function(`buyQuantumUpgrade.bind(this)(${i})`);
     $('#quantumUpgrades').append(upNode);
   }
+
+  // touch: tapping elsewhere hides the upgrade description
+  document.addEventListener('touchstart', function (e) {
+    if (e.target instanceof Element && e.target.closest('.quantumUpgrade')) return;
+    hideQuantumUpgradeDesc();
+  });
 })();
 
 function quantum() {
@@ -115,7 +124,7 @@ function quantum() {
   quantumReset();
 }
 function renderQunatum() {
-  $("#quantumButton").className = calcQuantumLabGain().gte(1) ? "" : "disabled";
+  setClassName($("#quantumButton"), calcQuantumLabGain().gte(1) ? "" : "disabled");
   
   if (qUpgradeRendered.a30 != game.achievements.includes(30)) {
     qUpgradeRendered.a30 = game.achievements.includes(30);
@@ -147,10 +156,10 @@ function renderQunatum() {
   
   var qLabGain = calcQuantumLabGain();
   var afterQuantumLab = (game.quantumUpgradeBought.includes('36') ? D.max(game.quantumLab, game.quantumLab.add(qLabGain.floor(0))) : game.quantumLab);
-  $("#quantumLabCost").innerHTML = `Next Lab: ${dNotation(D(1e100).mul(D(10).pow(D(5).mul(afterQuantumLab.mul(afterQuantumLab.sub(1)).add(afterQuantumLab)))).pow(getQuantumReqPow()[0]), 2)}$, ${dNotation(D(1e11).mul(D(10).pow(D(1/2).mul(afterQuantumLab.mul(afterQuantumLab.sub(1)).add(afterQuantumLab)))).pow(getQuantumReqPow()[1]), 2)} RP`;
-  $("#quantumLabQuantity").innerHTML = (qLabGain.floor(0).lte(1)?'a':dNotation(qLabGain.floor(0)));
-  $("#quantumDesc").innerHTML = `You have ${game.quantumLab} Quantum Lab which makes Qubit Prodution ${dNotation(calcQubitSpeed(), 4, 0)}x faster<br>Each Qubit makes your CPU 2x faster (x${dNotation(calcQubitEffect(), 4, 0)})`;
-  $("#qubitDisplay").innerHTML = `You have ${game.qubit.sub(calcUsedQubit())}/${game.qubit} Qubit (next Qubit in ${timeNotation(D(3).pow(game.qubit.sub(calcExtraQubit()).add(1)).sub(game.qubitProgress).div(calcQubitSpeed()))})`;
+  setHTML($("#quantumLabCost"), `Next Lab: ${dNotation(D(1e100).mul(D(10).pow(D(5).mul(afterQuantumLab.mul(afterQuantumLab.sub(1)).add(afterQuantumLab)))).pow(getQuantumReqPow()[0]), 2)}$, ${dNotation(D(1e11).mul(D(10).pow(D(1/2).mul(afterQuantumLab.mul(afterQuantumLab.sub(1)).add(afterQuantumLab)))).pow(getQuantumReqPow()[1]), 2)} RP`);
+  setHTML($("#quantumLabQuantity"), (qLabGain.floor(0).lte(1)?'a':dNotation(qLabGain.floor(0))));
+  setHTML($("#quantumDesc"), `You have ${game.quantumLab} Quantum Lab which makes Qubit Prodution ${dNotation(calcQubitSpeed(), 4, 0)}x faster<br>Each Qubit makes your CPU 2x faster (x${dNotation(calcQubitEffect(), 4, 0)})`);
+  setHTML($("#qubitDisplay"), `You have ${game.qubit.sub(calcUsedQubit())}/${game.qubit} Qubit (next Qubit in ${timeNotation(D(3).pow(game.qubit.sub(calcExtraQubit()).add(1)).sub(game.qubitProgress).div(calcQubitSpeed()))})`);
 }
 function calcQuantum(dt=0) {
   if (game.quantumUpgradeBought.includes('46') && D(3).pow(game.qubit.sub(calcExtraQubit()).add(1)).sub(game.qubitProgress).div(calcQubitSpeed()).lte(60*7)) game.qubitProgress = D(3).pow(game.qubitProgress.add(1).log(3).ceil(0));

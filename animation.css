@@ -168,3 +168,11 @@
     filter: hue-rotate(360deg);
   }
 }
+
+/* Effects toggle OFF (optionToggle[0] == 0, handled by setEffects in progress/game.js):
+   kill every infinite CSS animation. !important so it also beats the inline `animation`
+   set by setEffects and theme rules; the class only exists while OFF, so it can never
+   fight the default look. Hover feedback is unaffected (hover uses `transition`). */
+body.noFx * {
+  animation: none !important;
+}

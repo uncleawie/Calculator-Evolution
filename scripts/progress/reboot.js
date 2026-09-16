@@ -3,47 +3,43 @@
 })();
 
 function renderResearch() {
-  if (game.t2toggle) {
-    $('#researchWarp').style.display = "block";
-  } else {
-    $('#researchWarp').style.display = "none";
-  }
-  if (calcRPGain().gte(1)) {
-    $('#rebootButton').className = "";
-  } else {
-    $('#rebootButton').className = "disabled";
-  }
-  $('#rebootDesc').innerHTML = "If you Reboot now, you'll get " + dNotation(calcRPGain(), 4, 0) + " Research Points<br>";
-  //$('#rebootDesc').innerHTML += "You lose Number, Digit, Base, Upgrades, Money on Reboot<br>";
+  setDisplay($('#researchWarp'), game.t2toggle ? "block" : "none");
+  setClassName($('#rebootButton'), calcRPGain().gte(1) ? "" : "disabled");
+  var desc = "If you Reboot now, you'll get " + dNotation(calcRPGain(), 4, 0) + " Research Points<br>";
+  //desc += "You lose Number, Digit, Base, Upgrades, Money on Reboot<br>";
   if (!game.programActive[4] || game.shopBought[2] < 3) {
-    $('#rebootDesc').innerHTML += "You lose";
-    $('#rebootDesc').innerHTML += " Money, Upgrades";
-    if (!game.programActive[4] || game.shopBought[2] < 2) $('#rebootDesc').innerHTML += ", Digit, Number";
-    if (!game.programActive[4] || game.shopBought[2] < 1) $('#rebootDesc').innerHTML += ", Base";
-    $('#rebootDesc').innerHTML += " on Reboot<br>";
+    desc += "You lose";
+    desc += " Money, Upgrades";
+    if (!game.programActive[4] || game.shopBought[2] < 2) desc += ", Digit, Number";
+    if (!game.programActive[4] || game.shopBought[2] < 1) desc += ", Base";
+    desc += " on Reboot<br>";
   }
-  if (game.shopBought[2] >= 1 && !game.programActive[4]) $('#rebootDesc').innerHTML += "<span style=\"color: red; text-shadow: 0 0 0.4vh #f00;\">WARNING! You haven't activated Data_Holder.exe!</span><br>"
-  if (calcRPGain().lte(1e10)) $('#rebootDesc').innerHTML += "You need to reach " + formatWithBase(calcRPGain().plus(20).pow(6).sub(1).ceil(), game.base) + "(" + game.base + ") to get next RP";
-  $('#rpDisplay').innerHTML = "You have " + dNotation(game.researchPoint, 4, 0) + " Research Points";
+  if (game.shopBought[2] >= 1 && !game.programActive[4]) desc += "<span style=\"color: red; text-shadow: 0 0 0.4vh #f00;\">WARNING! You haven't activated Data_Holder.exe!</span><br>"
+  if (calcRPGain().lte(1e10)) desc += "You need to reach " + formatWithBase(calcRPGain().plus(20).pow(6).sub(1).ceil(), game.base) + "(" + game.base + ") to get next RP";
+  setHTML($('#rebootDesc'), desc);
+  setHTML($('#rpDisplay'), "You have " + dNotation(game.researchPoint, 4, 0) + " Research Points");
   for (var i = 0; i < 8; i++) {
-    $('.research:nth-of-type(' + (i+1) + ') > .researchProgress > .innerBar').style.width = Math.min(1, game.researchProgress[i])*26 + 'vw';
-    $('.research:nth-of-type(' + (i+1) + ') > .researchProgress > .innerBar').style.filter = `hue-rotate(${Math.min(1, game.researchProgress[i])*180}deg)`;
-    $('.research:nth-of-type(' + (i+1) + ') > .researchProgress > .researchLevel').innerHTML = 'Lv.' + game.researchLevel[i];
-    $('.research:nth-of-type(' + (i+1) + ') > .researchProgress > .researchProgressDisplay').innerHTML = timeNotation(Number(calcResearchDivide(i).div(calcResearchSpeed(game.researchSpeed[i])).valueOf())*(1-game.researchProgress[i])) + ' left';
+    var rowSel = '.research:nth-of-type(' + (i+1) + ')';
+    var innerBar = $(rowSel + ' > .researchProgress > .innerBar');
+    setStyle(innerBar, 'width', Math.min(1, game.researchProgress[i])*26 + 'vw');
+    setStyle(innerBar, 'filter', `hue-rotate(${Math.min(1, game.researchProgress[i])*180}deg)`);
+    setText($(rowSel + ' > .researchProgress > .researchLevel'), 'Lv.' + game.researchLevel[i]);
+    setText($(rowSel + ' > .researchProgress > .researchProgressDisplay'), timeNotation(Number(calcResearchDivide(i).div(calcResearchSpeed(game.researchSpeed[i])).valueOf())*(1-game.researchProgress[i])) + ' left');
     // progress number display: ${dNotation(game.researchProgress[i]*calcResearchDivide(i), 2)}/${dNotation(calcResearchDivide(i), 2)}
-    $('.research:nth-of-type(' + (i+1) + ') > .researchCost > span:nth-child(1)').innerHTML = dNotation(calcResearchCost(i, 0), 3);
-    $('.research:nth-of-type(' + (i+1) + ') > .researchCost > span:nth-child(2) > span').innerHTML = dNotation(calcResearchCost(i, 1), 3);
+    setText($(rowSel + ' > .researchCost > span:nth-child(1)'), dNotation(calcResearchCost(i, 0), 3));
+    setText($(rowSel + ' > .researchCost > span:nth-child(2) > span'), dNotation(calcResearchCost(i, 1), 3));
   }
-  [...document.getElementsByClassName("researchMoneyReq")].forEach(ele => {ele.style.display = (game.quantumUpgradeBought.includes('25') ? 'none' : 'inline');});
-  $('.research:nth-of-type(4)').style.display = ((game.researchLevel[0]>=1) ? "inline-block" : "none");
-  $('.research:nth-of-type(5)').style.display = ((game.researchLevel[0]>=1) ? "inline-block" : "none");
-  $('.research:nth-of-type(6)').style.display = ((game.researchLevel[3]>=1) ? "inline-block" : "none");
-  $('.research:nth-of-type(7)').style.display = ((game.researchLevel[5]>=1||((game.challengeEntered==5 || game.challengeEntered == 7)&&game.researchLevel[3]>=1)) ? "inline-block" : "none");
-  $('.research:nth-of-type(8)').style.display = ((game.researchLevel[6]>=1||((game.challengeEntered==5 || game.challengeEntered == 7)&&game.researchLevel[3]>=1)) ? "inline-block" : "none");
+  [...document.getElementsByClassName("researchMoneyReq")].forEach(ele => {setDisplay(ele, (game.quantumUpgradeBought.includes('25') ? 'none' : 'inline'));});
+  setDisplay($('.research:nth-of-type(4)'), ((game.researchLevel[0]>=1) ? "inline-block" : "none"));
+  setDisplay($('.research:nth-of-type(5)'), ((game.researchLevel[0]>=1) ? "inline-block" : "none"));
+  setDisplay($('.research:nth-of-type(6)'), ((game.researchLevel[3]>=1) ? "inline-block" : "none"));
+  setDisplay($('.research:nth-of-type(7)'), ((game.researchLevel[5]>=1||((game.challengeEntered==5 || game.challengeEntered == 7)&&game.researchLevel[3]>=1)) ? "inline-block" : "none"));
+  setDisplay($('.research:nth-of-type(8)'), ((game.researchLevel[6]>=1||((game.challengeEntered==5 || game.challengeEntered == 7)&&game.researchLevel[3]>=1)) ? "inline-block" : "none"));
 }
 function renderOverclockInfo() {
-  document.getElementById('overclockInfo').style.display = ((game.researchLevel[1]>=1)?"block":"none");
-  document.getElementById('overclockInfo').innerHTML = `Overclock Mult: x${dNotation(getOverclockPower(), 2)}<br>Durability: ${dNotation(game.durability.mul(100), 2)}%`;
+  var ocEl = document.getElementById('overclockInfo');
+  setDisplay(ocEl, ((game.researchLevel[1]>=1)?"block":"none"));
+  setHTML(ocEl, `Overclock Mult: x${dNotation(getOverclockPower(), 2)}<br>Durability: ${dNotation(game.durability.mul(100), 2)}%`);
 }
 
 function reboot() {
@@ -57,7 +53,7 @@ function reboot() {
     //animation
     if (calcRebootCooldown() > 1000) commandAppend('reboot', 75);
     rebooting = 1;
-    $('#rebootButton').innerHTML = "Rebooting";
+    setHTML($('#rebootButton'), "Rebooting");
     game.t2time = new Date().getTime();
   }
 }
@@ -129,8 +125,8 @@ function calcResearch(dt=0) {
   if (game.quantumUpgradeBought.includes('43')) game.researchPoint = game.researchPoint.add(calcRPGain().gt(1) ? calcRPGain().mul(0.3*(1/calcRebootCooldown())*1000).mul(calcRealDt(dt)) : 0);
   if (rebooting && game.t2time < new Date().getTime()-calcRebootCooldown()) {
     rebooting = 0;
-    $('#rebootButton').className = "";
-    $('#rebootButton').innerHTML = "Reboot";
+    setClassName($('#rebootButton'), "");
+    setHTML($('#rebootButton'), "Reboot");
     if (calcRebootCooldown() > 1000) commandAppend('reboot done! (Got ' + dNotation(gotRP, 4, 0) +' RP)', 75, 1);
   }
 }

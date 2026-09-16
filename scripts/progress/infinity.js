@@ -17,6 +17,10 @@
     }
 }())
 
+// precompiled once: interpolation still runs per call against live game values,
+// only the template compilation is hoisted (was: new Function every render per row)
+ipPassiveFunc = ipPassiveDesc.map(function (s) { return new Function("return `" + s + "`"); });
+
 function calcInfinity() {
     if (game.t4toggle && !game.money.isFinite()) infinity();
     ipPassiveAuto();
@@ -34,25 +38,25 @@ function infinity() {
 }
 
 function renderInfinity() {
-    document.getElementById("ipDisplay").innerHTML = `You have ${dNotation(game.infinityPoint, 4, 0)} Infinity Point`;
-    document.getElementById("ipDesc").innerHTML = `
+    setHTML(document.getElementById("ipDisplay"), `You have ${dNotation(game.infinityPoint, 4, 0)} Infinity Point`);
+    setHTML(document.getElementById("ipDesc"), `
     If you go Infinity now, you'll get ${dNotation(calcIpGain(new Date().getTime() - game.t5resetTime), 4, 0)} IP<br>
     Your IP amount will be overwritten when you go Infinity<br>
-    You cannot get back spent IP, use wisely`;
+    You cannot get back spent IP, use wisely`);
     [...document.getElementsByClassName("ipUpgrade")].forEach((ele, idx) => {
-        ele.innerHTML = `${ipUpgradeName[idx]}<br>x${dNotation(calcIpUpgradeEffect(idx), 2, 4)}`;
-        ele.classList[game.infinityPoint.gte(1)?"add":"remove"]('activated');
+        setHTML(ele, `${ipUpgradeName[idx]}<br>x${dNotation(calcIpUpgradeEffect(idx), 2, 4)}`);
+        setHasClass(ele, 'activated', game.infinityPoint.gte(1));
     });
-    document.getElementById("ipPassiveCost").innerHTML = dNotation(calcIpPassiveCost(), 4, 0);
+    setHTML(document.getElementById("ipPassiveCost"), dNotation(calcIpPassiveCost(), 4, 0));
     [...document.getElementsByClassName("ipPassiveContent")].forEach((ele, idx) => {
         var tempStr = ipPassiveDesc[idx+ipPassiveDisplay];
-        ele.innerHTML = (game.ipPassiveBought == idx+ipPassiveDisplay ? "<span style=\"opacity: 0.2\">" : "") + (typeof tempStr != "undefined" && game.ipPassiveBought >= idx+ipPassiveDisplay ? new Function("return `" + tempStr + "`")() : "") + (game.ipPassiveBought == idx+ipPassiveDisplay ? "</span>" : "");
+        setHTML(ele, (game.ipPassiveBought == idx+ipPassiveDisplay ? "<span style=\"opacity: 0.2\">" : "") + (typeof tempStr != "undefined" && game.ipPassiveBought >= idx+ipPassiveDisplay ? ipPassiveFunc[idx+ipPassiveDisplay]() : "") + (game.ipPassiveBought == idx+ipPassiveDisplay ? "</span>" : ""));
     });
-    document.getElementById("buyIpPassive").classList[game.infinityPoint.gte(calcIpPassiveCost())?"add":"remove"]('activated');
+    setHasClass(document.getElementById("buyIpPassive"), 'activated', game.infinityPoint.gte(calcIpPassiveCost()));
 }
 function renderInfinityInfo() {
-    $("#inifnityInfo").style.display = game.t5toggle ? "block" : "none";
-    if (game.t5toggle) $("#inifnityInfo").innerHTML = `${timeNotation((new Date().getTime()-game.t5resetTime)/1000)} / ${dNotation(calcIpGain(new Date().getTime() - game.t5resetTime), 4, 0)} IP`;  
+    setDisplay($("#inifnityInfo"), game.t5toggle ? "block" : "none");
+    if (game.t5toggle) setHTML($("#inifnityInfo"), `${timeNotation((new Date().getTime()-game.t5resetTime)/1000)} / ${dNotation(calcIpGain(new Date().getTime() - game.t5resetTime), 4, 0)} IP`);
 }
 
 function buyIpUpgrade(idx) {

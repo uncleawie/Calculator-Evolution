@@ -68,6 +68,10 @@
     'game.quantumUpgradeBought.length>=36', 'game.quantumLab.gte(600)', 'game.wormholeChallengeProgress[6]>=1', 'game.t4resetTime <= 500', 'game.t4resets.gte(100)',
     'game.wormholeChallengeProgress[7]>=1', 'game.wormholeChallengeProgress[7]>=10', '!game.money.isFinite()', 'game.t5record <= 1000*3600*5', 'game.t5record <= 1000*10'
   ];
+  // precompiled once (was: new Function per not-yet-earned achievement per tick, up to 40 compiles/tick)
+  achievementGoalCheck = achievementGoalFunc.map(function (s) { return new Function('return ' + s); });
+  // same for the hover description templates (event-driven, but free to hoist)
+  achievementDescFunc = achievementGoal.map(function (s) { return new Function("return `" + s + "`"); });
 })();
 
 function initAchievements() {
@@ -86,15 +90,22 @@ function initAchievements() {
     cNode.innerHTML = achievementName[i].replace("*", "<span style=\"color: #ddff00;\">*</span>");
     cNode.onmouseover = new Function(`achivenementHover.bind(this)(${i})`);
     cNode.onmouseout = new Function(`achivenementUnhover()`);
+    // touch: tap an achievement to toggle its goal/reward popup (hover has no touch equivalent)
+    cNode.addEventListener('touchend', new Function('event', `event.preventDefault(); achivenementTouchToggle.bind(this)(${i})`));
     cNode.classList.add("achievementNode");
     trNode.appendChild(cNode);
   }
+  // touch: tapping anywhere else hides the achievement popup
+  document.addEventListener('touchstart', function (e) {
+    if (e.target instanceof Element && e.target.closest('.achievementNode')) return;
+    achivenementUnhover();
+  });
 }
 function calcAchievements() {
   var achTxt = '';
   for (var i = 0, l = achievementName.length; i < l; i++) {
     if (game.achievements.includes(i)) continue;
-    if (new Function('return ' + achievementGoalFunc[i])()) {
+    if (achievementGoalCheck[i]()) {
       achTxt = achievementName[i];
       game.achievements.push(i);
       break;
@@ -105,16 +116,28 @@ function calcAchievements() {
     commandAppend(`Got an Achievement: ${achTxt.replace(/<br>\*/, '')}`, -40);
   }
 }
+var lastAchCount = -1;
 function renderAchievements() {
+  // achievements are append-only, so length is a sufficient dirty key — only
+  // rewrite the 40 grayscale filters when the earned set actually changed
+  if (lastAchCount == game.achievements.length) return;
+  lastAchCount = game.achievements.length;
   [...document.getElementsByClassName("achievementNode")].forEach((ele, idx) => ele.style.filter = `grayscale(${!game.achievements.includes(idx)*1})`)
 }
 
 function achivenementHover(idx) {
   $("#achDesc").style.opacity = 1;
-  $("#achDesc").innerHTML = new Function("return `" + achievementGoal[idx] + "`")().replace(/(Reward: +)/, `<span style=\"color: ${game.achievements.includes(idx)?"#ddff00;":"#ccd1a3;"}">$1<span>`);
+  $("#achDesc").innerHTML = achievementDescFunc[idx]().replace(/(Reward: +)/, `<span style=\"color: ${game.achievements.includes(idx)?"#ddff00;":"#ccd1a3;"}">$1<span>`);
   $("#achDesc").style.top = (this.getBoundingClientRect().top - innerHeight/100 - $("#achDesc").offsetHeight) + 'px';
   $("#achDesc").style.left = (this.getBoundingClientRect().left - $("#achDesc").offsetWidth/4) + 'px';
 }
 function achivenementUnhover() {
   $("#achDesc").style.opacity = 0;
+}
+var achTouchIdx = -1;
+function achivenementTouchToggle(idx) {
+  // touch equivalent of hover: tap shows, tapping again (or elsewhere) hides
+  if (achTouchIdx == idx) { achTouchIdx = -1; achivenementUnhover(); return; }
+  achTouchIdx = idx;
+  achivenementHover.call(this, idx);
 }

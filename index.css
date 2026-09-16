@@ -167,7 +167,10 @@ body {
   top: 0; right: 0;
   min-width: 24vh;
   font-size: 1.6vh;
-  background-color: rgba(255, 255, 255, 0.6); box-shadow: 0 0 3vh rgba(255, 255, 255, 0.6);
+  /* Opaque panel so the flashing number behind can't bleed through (KHVBOX,
+     user experiment). Original was translucent:
+     background-color: rgba(255, 255, 255, 0.6); box-shadow: 0 0 3vh rgba(255, 255, 255, 0.6); */
+  background-color: #fff; box-shadow: 0 0 3vh rgba(255, 255, 255, 0.6);
   pointer-events: none;
 }
 #infoArea > div {
@@ -1076,4 +1079,73 @@ body {
 
 .normalText {
   color: var(--baseCol); font-size: 1.8vh;
+}
+
+/* ===== Phone-width layout (IPVPW, 2026-09-05) =====
+   The base layout is proportioned for a ~16:9 desktop monitor: panels are
+   vw-wide, fonts vh-tall. On a ~390px phone viewport vw collapses (1vw ≈ 3.9px)
+   and every vw-sized panel shrinks to a sliver. Below 700px: unlock page
+   scrolling (the desktop design is a fixed 100vh canvas), stack the panels
+   full-width, and let the runtime-sized boards (grid/quantum tree) measure a
+   wider box. vh-based fonts stay readable in portrait. Landscape phones still
+   render desktop rules (fonts shrink — play portrait; see www/README.md).
+   Desktop layout, themes, and game state are untouched by this block. */
+@media (max-width: 700px) {
+  /* let the page scroll on phone — the fixed desktop canvas would clip stacked panels */
+  #warpAll {
+    height: auto; min-height: 100vh; min-height: 100svh;
+    overflow: visible;
+  }
+  #commandArea, #debugInfoArea { position: fixed; } /* toasts/debug stay on-screen while scrolling */
+
+  /* nav: 9 tabs don't fit one line at phone width — let them wrap */
+  #mainNav { height: auto; min-height: 5vh; font-size: 2vh; margin-left: 2vw; }
+
+  /* Module tab: drop the desktop side-by-side flex row */
+  .tab:nth-of-type(1) { display: block; height: auto; }
+  .moduleContainer { display: block; height: auto; }
+  .moduleContainer:nth-of-type(2) { width: 96vw; }
+  .sectionTxt { margin-left: 2vw; }
+  .sectionTxt:nth-of-type(1) { width: auto; }
+  #programs { margin-left: 2vw; }
+  .program { width: 95vw; }
+
+  /* Singularity grid + machine palette: stack; the grid re-measures via updateGridSize() */
+  #singularityGridInnerWarp { width: 96vw; height: auto; }
+  #singularityGridInnerWarp > span { float: none; }
+  #singularityGridOutWarp { width: 100%; height: 96vw; margin-right: 0; }
+  #singularityEffectsWarp { width: 100%; }
+  #singularityMachines { width: 100%; }
+
+  /* Shop: three 25vw boxes → one stacked column */
+  .tab:nth-of-type(2) { margin: 2vh 0 0 2vw; }
+  .shopBox { float: none; width: 96vw; height: auto; padding-bottom: 1vh; }
+  .shopItem { margin: 2vh 3vw; }
+
+  /* Reboot / Research tab */
+  #rebootButton { margin: 0 auto; width: 50vw; }
+  #rebootDesc { height: auto; min-height: 6vh; } /* desc wraps taller on narrow screens; fixed height let the RP line collide */
+  .research { display: block; width: 94vw; margin: 2vh auto 0 auto; }
+  .researchName { width: auto; }
+  .researchProgress, .shadowBar { width: 88vw; }
+
+  /* Achievements: 5×9vh cells slightly overflow 390px — shrink a touch */
+  #achPageNav { width: 80vw; }
+  #achWarp > tbody > tr > td { width: 8vh; height: 8vh; }
+
+  /* Quantum */
+  #quantumButton { width: 60vw; }
+  #quantumUpgrades { --s: min(96vw, 60vh); }
+
+  /* Singularity tab: widen button; challenge tiles flow below the description
+     instead of the desktop's absolute overlay */
+  #singularityButton { width: 60vw; }
+  #wormholeChallengeWarp { position: static; width: 96vw; height: auto; margin: 2vh auto; }
+  #wormholeChallengeInnerWarp { display: flow-root; } /* contain the floated tiles */
+  .wormholeChallenge { width: 46%; height: auto; min-height: 17vh; }
+
+  /* Infinity */
+  #ipRepUpgrades { width: 92vw; }
+  #ipRepUpgrades > tbody > tr > td { font-size: 1.6vh; }
+  #ipPassives { width: 92vw; }
 }

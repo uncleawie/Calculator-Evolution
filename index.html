@@ -2,22 +2,25 @@
 <html dir="ltr">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="animation.css?ver=1.1.37">
-    <link rel="stylesheet" href="index.css?ver=1.1.37.1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#000000">
+    <link href="fonts.css" rel="stylesheet">
+    <link rel="stylesheet" href="animation.css">
+    <link rel="stylesheet" href="index.css">
     <script src="./scripts/decimalMin.js"></script>
-    <script src="./scripts/index.js?ver=1.1.37" defer></script>
-    <script src="./scripts/numberFunc.js?ver=1.1.37" defer></script>
-    <script src="./scripts/achievement.js?ver=1.1.37" defer></script>
-    <script src="./scripts/progress/game.js?ver=1.1.37" defer></script>
-    <script src="./scripts/progress/reboot.js?ver=1.1.37" defer></script>
-    <script src="./scripts/progress/quantum.js?ver=1.1.37" defer></script>
-    <script src="./scripts/progress/singularity.js?ver=1.1.37.1" defer></script>
-    <script src="./scripts/progress/infinity.js?ver=1.1.37" defer></script>
-    <script src="./scripts/saveload.js?ver=1.1.37" defer></script>
-    <script src="./scripts/loop.js?ver=1.1.37" defer></script>
-    <script src="./scripts/reset.js?ver=1.1.37" defer></script>
+    <script src="./scripts/index.js" defer></script>
+    <script src="./scripts/numberFunc.js" defer></script>
+    <script src="./scripts/achievement.js" defer></script>
+    <script src="./scripts/progress/game.js" defer></script>
+    <script src="./scripts/progress/reboot.js" defer></script>
+    <script src="./scripts/progress/quantum.js" defer></script>
+    <script src="./scripts/progress/singularity.js" defer></script>
+    <script src="./scripts/progress/infinity.js" defer></script>
+    <script src="./scripts/saveload.js" defer></script>
+    <script src="./scripts/loop.js" defer></script>
+    <script src="./scripts/reset.js" defer></script>
     <title>Calculator Evolution v1.1.37</title>
   </head>
   <body>
@@ -441,25 +444,29 @@
             Hard Reset
           </div>
           <br>
-          <a class="optionBtn" style="text-decoration: none;" href="https://discord.gg/wkdVQxT" target="_blank">
-            My Discord
-          </a>
           <div class="normalText" style="margin-top: 1vh; font-size: 1.3vh;">
             Hotkeys<br>
             -----------<br>
             1 ~ 7: Toggle program 1~7<br>
-            8: Toggle all programs<br>
-            Shift + 1 ~ 8: Buy research 1 ~ 8<br>
-            A, S, D, F, G, H, J: Open tabs<br>
-            R: reboot<br>
-            Q: build lab<br>
-            Ctrl: See advanced information<br><br>
+            8: Start programs 1~7 in order (stops when blocked)<br>
+            Shift + 8: Buy research 8 (repeats while held)<br>
+            A / S: Module / Shop tab<br>
+            D / F: Achievement / Research tab<br>
+            G / H / J: Quantum / Singularity / Infinity tab<br>
+            R: Reboot<br>
+            Q: Build Quantum Lab<br>
+            Z: Go Singularity<br><br>
+            P, Space or Shift + P: Pause the game<br>
             Shift + H: Toggle Hyper mode! - More fancy effects, more lag!<br>
-            Shift + P: Pause the game
+            Ctrl (hold): See advanced information<br>
+            Shift + Click grid machine: Upgrade to max tier<br><br>
+            Alias keys: End = 1, PgDn = 3, Clear = 5, Home = 7
           </div>
-          <!-- Start of CuterCounter Code -->
-          <a href="https://www.cutercounter.com/" target="_blank"><img src="https://www.cutercounter.com/hits.php?id=hvxnafpf&nd=6&style=10" border="0" alt="website counter"></a>
-          <!-- End of CuterCounter Code -->        </div>
+          <div class="normalText" style="margin-top: 2vh; font-size: 1.3vh;">
+            Local continuation of <b>Calculator Evolution v1.1.37</b> by <b>spotky1004</b>.<br>
+            Current version shown in the info readout (Options: Info toggle).
+          </div>
+          </div>
         <!-- Quantum -->
         <div class="tab" style="display:none;">
           <div id="quantumButton" class="disabled" onclick="quantum()">

@@ -32,9 +32,11 @@
     gridNode.onclick = new Function(`singularityGridClick(${i%5}, ${Math.floor(i/5)}, "l")`);
     gridNode.onmousedown = new Function(`singularityGridDown(${i%5}, ${Math.floor(i/5)})`);
     const removeItem = new Function(`singularityGridClick(${i%5}, ${Math.floor(i/5)}, "r")`);
+    const overItem = new Function(`singularityGridOver(${i%5}, ${Math.floor(i/5)})`);
     let touchTimeout = null;
     gridNode.addEventListener('contextmenu', removeItem);
     gridNode.addEventListener('touchstart', () => {
+      overItem(); // touch: show the machine info panel (hover has no touch equivalent); long-press still removes
       touchTimeout = setTimeout(removeItem, 1000);
     });
     gridNode.addEventListener('touchend', () => {
@@ -125,6 +127,20 @@
   // prevent right click
   $("#singularityGridOutInnerWarp").addEventListener('contextmenu', event => event.preventDefault());
 
+  // touch: tapping elsewhere restores the default boost-list panel (hover-out equivalent)
+  document.addEventListener('touchstart', function (e) {
+    if (e.target instanceof Element && e.target.closest('.singularityGridBlock')) return;
+    singularityGridOut();
+  });
+
+  // grid sizing is measured on demand (resize/orientationchange/theme/unlock), not
+  // every tick — reading offsetWidth/offsetHeight forces a synchronous layout,
+  // which is far too expensive to repeat at 30fps. See updateGridSize()/renderGrid().
+  gridSizeDirty = true;
+  lastGridUnlocked = undefined;
+  window.addEventListener('resize', function(){ gridSizeDirty = true; });
+  window.addEventListener('orientationchange', function(){ gridSizeDirty = true; });
+
   singularityGridIdx = [
     1, 4, 9, 16, 25,
     2, 3, 8, 15, 24,
@@ -166,21 +182,22 @@ function singularity() {
   commandAppend(`Go singularity (${ordNum(game.t4resets)})`, (30+game.t4resets.toNumber()*3)%360, 1);
 }
 function renderSingularity() {
-  $("#singularityButton").className = game.quantumLab.gte(80) ? "" : "disabled";
-  $("#singularityDesc").innerHTML = game.quantumLab.gte(80) ? `If you go singularity now, you'll get <b>${dNotation(calcSingularityPowerGain(), 4, 0)} SP</b> ${game.quantumLab.lt(500) ? `(next SP at ${calcSingularityPowerGain(1)} QL)`: ''}` : 'You need 80 Quantum Labs to go Singularity';
-  $("#singularityDesc").innerHTML += `<br>You have <b><span style="color: #fff;">${dNotation(game.singularityPower, 4, 0)} Singularity Power</span></b>`;
-  $("#singularityDesc").innerHTML += `<br>Each SP increases Multi Process by 4 (tot ${Math.floor(Math.min(25, game.singularityPower.toNumber()*4)+Math.max(0, game.singularityPower.toNumber()*4-25)**0.5)}, softcap at 25)`
-  $("#singularityDesc").innerHTML += `<br>And boosts grid machine Power by x${dNotation(game.singularityPower.pow(4).pow(game.quantumUpgradeBought.includes('75')?D(1).add(game.singularityPower.add(1).log(10).pow(0.8)):1), 4, 0)}`;
-  if (calcMilestoneDone() < 7) $("#singularityDesc").innerHTML += `<br>Have ${2**calcMilestoneDone()*2} SP to retain Keep ${romanize(calcMilestoneDone()+1).toUpperCase()}`;
-  $("#wormholeChallengeWarp").style.display = game.t4resets.gte(2) || (game.t5resets.gte(1) && game.singularityPower.gte(1)) ? "block" : "none";
-  $("#gridReq").innerHTML = `Complete ${4-(calcChallengeDone()+3)%4} more challenge to unlock ${ordNum(calcGridOpened()+1)} Grid space`;
-  $("#challengeRewardMachine").style.color = game.challengeEntered == -1 ? "inherit" : singularityMachineData[challengeIdx[game.challengeEntered]].color;
-  $("#challengeRewardMachine").style.textShadow = game.challengeEntered == -1 ? "inherit" : `0 0 0.3vh ${singularityMachineData[challengeIdx[game.challengeEntered]].color}`;
-  [...document.getElementsByClassName("wormholeChallengeName")].forEach((ele, idx) => ele.innerHTML = `${singularityMachineData[challengeIdx[idx]].name} Challenge (${game.wormholeChallengeProgress[idx]}/10)`);
-  [...document.getElementsByClassName("wormholeChallenge")].forEach((ele, idx) => ele.style.setProperty("--progress", `${10*game.wormholeChallengeProgress[idx]}%`));
-  [...document.getElementsByClassName("wormholeChallengeEffect")].forEach((ele, idx) => ele.innerHTML = challengeDesc[idx]);
-  [...document.getElementsByClassName("wormholeChallengeGoal")].forEach((ele, idx) => ele.innerHTML = game.wormholeChallengeProgress[idx] == 10 ? `Record: ${game.challengeRecord[idx]} QL` : `Goal: ${dNotation(calcChallengeGoal(idx), 4, 0)} QL`);
-  $("#exitChallenge").style.display = game.challengeEntered == -1 ? "none" : "block";
+  setClassName($("#singularityButton"), game.quantumLab.gte(80) ? "" : "disabled");
+  var desc = game.quantumLab.gte(80) ? `If you go singularity now, you'll get <b>${dNotation(calcSingularityPowerGain(), 4, 0)} SP</b> ${game.quantumLab.lt(500) ? `(next SP at ${calcSingularityPowerGain(1)} QL)`: ''}` : 'You need 80 Quantum Labs to go Singularity';
+  desc += `<br>You have <b><span style="color: #fff;">${dNotation(game.singularityPower, 4, 0)} Singularity Power</span></b>`;
+  desc += `<br>Each SP increases Multi Process by 4 (tot ${Math.floor(Math.min(25, game.singularityPower.toNumber()*4)+Math.max(0, game.singularityPower.toNumber()*4-25)**0.5)}, softcap at 25)`
+  desc += `<br>And boosts grid machine Power by x${dNotation(game.singularityPower.pow(4).pow(game.quantumUpgradeBought.includes('75')?D(1).add(game.singularityPower.add(1).log(10).pow(0.8)):1), 4, 0)}`;
+  if (calcMilestoneDone() < 7) desc += `<br>Have ${2**calcMilestoneDone()*2} SP to retain Keep ${romanize(calcMilestoneDone()+1).toUpperCase()}`;
+  setHTML($("#singularityDesc"), desc);
+  setDisplay($("#wormholeChallengeWarp"), game.t4resets.gte(2) || (game.t5resets.gte(1) && game.singularityPower.gte(1)) ? "block" : "none");
+  setHTML($("#gridReq"), `Complete ${4-(calcChallengeDone()+3)%4} more challenge to unlock ${ordNum(calcGridOpened()+1)} Grid space`);
+  setStyle($("#challengeRewardMachine"), 'color', game.challengeEntered == -1 ? "inherit" : singularityMachineData[challengeIdx[game.challengeEntered]].color);
+  setStyle($("#challengeRewardMachine"), 'textShadow', game.challengeEntered == -1 ? "inherit" : `0 0 0.3vh ${singularityMachineData[challengeIdx[game.challengeEntered]].color}`);
+  [...document.getElementsByClassName("wormholeChallengeName")].forEach((ele, idx) => setText(ele, `${singularityMachineData[challengeIdx[idx]].name} Challenge (${game.wormholeChallengeProgress[idx]}/10)`));
+  [...document.getElementsByClassName("wormholeChallenge")].forEach((ele, idx) => setCssVar(ele, "--progress", `${10*game.wormholeChallengeProgress[idx]}%`));
+  [...document.getElementsByClassName("wormholeChallengeEffect")].forEach((ele, idx) => setText(ele, challengeDesc[idx]));
+  [...document.getElementsByClassName("wormholeChallengeGoal")].forEach((ele, idx) => setText(ele, game.wormholeChallengeProgress[idx] == 10 ? `Record: ${game.challengeRecord[idx]} QL` : `Goal: ${dNotation(calcChallengeGoal(idx), 4, 0)} QL`));
+  setDisplay($("#exitChallenge"), game.challengeEntered == -1 ? "none" : "block");
 }
 function calcSingularity(dt) {
   for (var i in singularityBoostsBase) singularityBoosts[i] = D(singularityBoostsBase[i]);
@@ -202,39 +219,49 @@ function calcSingularity(dt) {
     }
   }
 }
+// re-measure the grid warp; only called when gridSizeDirty (a resize event, theme
+// change, unlock, etc.). Reads force a synchronous layout, so keep them rare.
+function updateGridSize() {
+  var warp = $("#singularityGridOutWarp"), inner = $("#singularityGridOutInnerWarp");
+  var s = Math.min(warp.offsetWidth, warp.offsetHeight);
+  inner.style.setProperty("--s", s + 'px');
+  inner.style.marginTop = Math.max(0, (warp.offsetHeight-inner.offsetHeight)/2) + 'px';
+  gridSizeDirty = false;
+}
 function renderGrid() {
   var unlockedBool = game.singularityPower.gte(1) || game.t5resets.gte(1);
-  $("#singularityGridWarp").style.display = (unlockedBool ? "block" : "none");
+  setDisplay($("#singularityGridWarp"), (unlockedBool ? "block" : "none"));
+  if (lastGridUnlocked !== unlockedBool) gridSizeDirty = true;   // re-measure on unlock state change
+  lastGridUnlocked = unlockedBool;
   if (unlockedBool) {
-    $("#singularityGridOutInnerWarp").style.setProperty("--s", Math.min($("#singularityGridOutWarp").offsetWidth, $("#singularityGridOutWarp").offsetHeight) + 'px');
-    $("#singularityGridOutInnerWarp").style.marginTop = Math.max(0, ($("#singularityGridOutWarp").offsetHeight-$("#singularityGridOutInnerWarp").offsetHeight)/2) + 'px';
-    [...document.getElementsByClassName("singularityGridBlock")].forEach((ele, idx) => {ele.classList[singularityGridIdx[idx]>calcGridOpened()?"add":"remove"]("disabled")});
+    if (gridSizeDirty) updateGridSize();
+    [...document.getElementsByClassName("singularityGridBlock")].forEach((ele, idx) => {setHasClass(ele, "disabled", singularityGridIdx[idx]>calcGridOpened())});
     for (let i = 0, l = gridInnerElements.length; i < l; i++) {
       const tempEle = gridInnerElements[i];
       var thisMachine = game.singularityGrid[i%5 + '' + Math.floor(i/5)];
       if (typeof thisMachine != "undefined") {
         var tempObj = singularityMachineData[thisMachine.type];
-        tempEle[0].innerHTML = thisMachine.tier;
-        tempEle[1].innerHTML = tempObj.name;
-        tempEle[2].innerHTML = dNotation(thisMachine.value, 2, 2);
-        tempEle[3].style.setProperty("--arrowState", thisMachine.rotate);
-        tempEle[0].style.display = typeof tempObj.hasTier == "undefined" || tempObj.hasTier == 1 ? "block" : "none";
-        tempEle[1].style.display = typeof tempObj.hasName == "undefined" || tempObj.hasName == 1 ? "block" : "none";
-        tempEle[2].style.display = typeof tempObj.hasValue == "undefined" || tempObj.hasValue == 1 ? "block" : "none";
-        tempEle[3].style.display = typeof tempObj.hasArrow == "undefined" || tempObj.hasArrow == 1 ? "block" : "none";
-        tempEle[3].style.setProperty("--cCol", tempObj.color);
+        setHTML(tempEle[0], thisMachine.tier);
+        setHTML(tempEle[1], tempObj.name);
+        setHTML(tempEle[2], dNotation(thisMachine.value, 2, 2));
+        setCssVar(tempEle[3], "--arrowState", thisMachine.rotate);
+        setDisplay(tempEle[0], typeof tempObj.hasTier == "undefined" || tempObj.hasTier == 1 ? "block" : "none");
+        setDisplay(tempEle[1], typeof tempObj.hasName == "undefined" || tempObj.hasName == 1 ? "block" : "none");
+        setDisplay(tempEle[2], typeof tempObj.hasValue == "undefined" || tempObj.hasValue == 1 ? "block" : "none");
+        setDisplay(tempEle[3], typeof tempObj.hasArrow == "undefined" || tempObj.hasArrow == 1 ? "block" : "none");
+        setCssVar(tempEle[3], "--cCol", tempObj.color);
       } else {
-        for (var j = 0; j < 4; j++) tempEle[j].style.display = "none";
+        for (var j = 0; j < 4; j++) setDisplay(tempEle[j], "none");
       }
     }
     [...document.getElementsByClassName("singularityGridMachines")].forEach((ele, idx) => {
       var machineHave = getSingularityMachineHave(machineIdx[idx]);
-      ele.style.display = machineHave < 1 ? "none" : "block";
-      ele.classList[selectedMachine==idx?"add":"remove"]("selected");
+      setDisplay(ele, machineHave < 1 ? "none" : "block");
+      setHasClass(ele, "selected", selectedMachine==idx);
     });
     [...document.getElementsByClassName("singularityGridMachineTxtQuantity")].forEach((ele, idx) => {
       var machineHave = getSingularityMachineHave(machineIdx[idx]);
-      ele.innerHTML = machineHave-clacMachineUsed(machineIdx[idx]);
+      setText(ele, machineHave-clacMachineUsed(machineIdx[idx]));
     });
     renderGridSideInfo();
   } else {
@@ -271,8 +298,8 @@ function wormholeChallengeEnter(idx) {
   }
 }
 function renderSingularityInfo() {
-  $("#singularityInfo").style.display = game.challengeEntered != -1 ? "block" : "none";
-  if (game.challengeEntered != -1) $("#singularityInfo").innerHTML = `In ${singularityMachineData[challengeIdx[game.challengeEntered]].name} Challenge x${game.wormholeChallengeProgress[game.challengeEntered]} - QL ${dNotation(game.quantumLab, 4, 0)}/${dNotation(calcChallengeGoal(game.challengeEntered), 4, 0)}`;
+  setDisplay($("#singularityInfo"), game.challengeEntered != -1 ? "block" : "none");
+  if (game.challengeEntered != -1) setHTML($("#singularityInfo"), `In ${singularityMachineData[challengeIdx[game.challengeEntered]].name} Challenge x${game.wormholeChallengeProgress[game.challengeEntered]} - QL ${dNotation(game.quantumLab, 4, 0)}/${dNotation(calcChallengeGoal(game.challengeEntered), 4, 0)}`);
 }
 
 // dom
@@ -361,7 +388,7 @@ function renderGridSideInfo() {
     thingToWrite += "Boost List<br>---------------<br>";
     for (var i in singularityBoosts) thingToWrite += `<span style="color: ${singularityMachineData[i].color}; text-shadow: 0 0 1vh ${singularityMachineData[i].color}; filter: brightness(1.8) grayscale(${singularityBoosts[i].eq(singularityBoostsBase[i])?1:0});">${singularityMachineData[i].name} ${singularityMachineData[i].boostType == "mul" ? "x" : "+"}${dNotation(singularityBoosts[i], 4, 2)}</span><br>`;
   }
-  $("#singularityEffects").innerHTML = thingToWrite;
+  setHTML($("#singularityEffects"), thingToWrite);
 }
 function singularityMachineSelect(idx) {
   if (getSingularityMachineHave(machineIdx[idx])-clacMachineUsed(machineIdx[idx]) < 1) return;

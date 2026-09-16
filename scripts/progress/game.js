@@ -128,57 +128,60 @@
 })();
 
 function renderBasic() {
-  $("#basedNumber").innerHTML = formatWithBase(game.number, game.base, game.digits, 1, 60);
-  $("#money").innerHTML = dNotation(game.money, 5);
+  setHTML($("#basedNumber"), formatWithBase(game.number, game.base, game.digits, 1, 60));
+  setHTML($("#money"), dNotation(game.money, 5));
   tempRes = ` <span style="filter: grayscale(${!game.programActive[1]*1})">(+${dNotation(calcMoneyGain(), 2, 2).padEnd(7, 'B').replace(/B/g, "&nbsp;")}$/s)</span>`;
   if (game.t2toggle) tempRes += ` | ${dNotation(game.researchPoint, 4, 0)} RP\n`;
   if (game.t3toggle) tempRes += `
    | ${(!keyDowns[17] ?
      dNotation(game.qubit, 4, 0) + " Qubit":
      `${game.qubit.sub(calcUsedQubit())}/${game.qubit} Qubit (next Qubit in ${timeNotation(D(3).pow(game.qubit.sub(calcChallengeDone()).add(1)).sub(game.qubitProgress).div(calcQubitSpeed()))})`
-     )} , 
+     )} ,
    ${dNotation(game.quantumLab, 4, 0)} Lab\n`;
   // I'm lazy (just copied that from quantum.js, will fix) :v
   if (game.t4toggle) tempRes += ` | ${dNotation(game.singularityPower, 4, 0)} SP\n`;
   if (game.t5toggle) tempRes += ` | ${dNotation(game.infinityPoint, 4, 0)} IP\n`;
-  $("#otherRes").innerHTML = tempRes;
-  $("#memoryDigit").innerHTML = ("").padStart(Math.min(80, dNum(game.mDigits)-dNum(game.digits)), 0);
-  $("#numberBase").innerHTML = game.base;
+  setHTML($("#otherRes"), tempRes);
+  setText($("#memoryDigit"), ("").padStart(Math.min(80, dNum(game.mDigits)-dNum(game.digits)), 0));
+  setText($("#numberBase"), `${game.base}`);
 
   // tabs
-  $('#mainNav > .tabNav:nth-child(7)').style.display = (game.t3toggle ? 'inline-block' : 'none');
-  $('#mainNav > .tabNav:nth-child(7)').classList[calcQuantumLabGain().gte(1)?"add":"remove"]("available")
-  $('#mainNav > .tabNav:nth-child(8)').style.display = (game.t4toggle ? 'inline-block' : 'none');
-  $('#mainNav > .tabNav:nth-child(9)').style.display = (game.t5toggle ? 'inline-block' : 'none');
+  var t3Nav = $('#mainNav > .tabNav:nth-child(7)');
+  setDisplay(t3Nav, (game.t3toggle ? 'inline-block' : 'none'));
+  setHasClass(t3Nav, "available", !!calcQuantumLabGain().gte(1));
+  setDisplay($('#mainNav > .tabNav:nth-child(8)'), (game.t4toggle ? 'inline-block' : 'none'));
+  setDisplay($('#mainNav > .tabNav:nth-child(9)'), (game.t5toggle ? 'inline-block' : 'none'));
 
   commandFloat();
 
   // programStatusArea
-  $("#programStatusArea").style.display = game.t3toggle ? "block" : "none";
-  [...document.getElementsByClassName("programStatusNode")].forEach((ele, idx) => {ele.classList[game.programActive[idx]?"add":"remove"]("activated")});
-  $("#programStatusProcess").innerHTML = `${calcMultiProcess()-calcProcessLeft()}/${calcMultiProcess()}`;
+  setDisplay($("#programStatusArea"), game.t3toggle ? "block" : "none");
+  [...document.getElementsByClassName("programStatusNode")].forEach((ele, idx) => {setHasClass(ele, "activated", !!game.programActive[idx])});
+  setText($("#programStatusProcess"), `${calcMultiProcess()-calcProcessLeft()}/${calcMultiProcess()}`);
 
 }
 function renderModule() {
-  $("#processes").innerHTML = `Process ${calcProcessActive()}/${calcMultiProcess()}`;
+  setText($("#processes"), `Process ${calcProcessActive()}/${calcMultiProcess()}`);
 
   // program
   var programPoint = [-1, 1, 4, 0, 2, 3, -1];
   var defNames = ["", "Miner.exe", "Memory.exe", "Increment.exe", "Data_Holder.exe", "Auto_Upgrader.exe", ""];
   for (var i = 0; i < 7; i++) {
-    $(".program:nth-of-type(" + (i+1) + ")").className = ((game.programActive[i]) ? "program active" : "program") + (i==6 ? " permanent": "");
+    var progEl = $(".program:nth-of-type(" + (i+1) + ")");
+    setClassName(progEl, ((game.programActive[i]) ? "program active" : "program") + (i==6 ? " permanent": ""));
     if (programPoint[i] != -1) {
+      var nameEl = $(".program:nth-of-type(" + (i+1) + ") > span:nth-child(2)");
       if (game.shopBought[programPoint[i]]-1 == -1) {
-        $(".program:nth-of-type(" + (i+1) + ") > span:nth-child(2)").innerHTML = defNames[i];
+        setHTML(nameEl, defNames[i]);
         continue;
       }
-      $(".program:nth-of-type(" + (i+1) + ") > span:nth-child(2)").innerHTML = shopItems[programPoint[i]][game.shopBought[programPoint[i]]-1].itemName;
+      setHTML(nameEl, shopItems[programPoint[i]][game.shopBought[programPoint[i]]-1].itemName);
     }
   }
-  $(".program:nth-of-type(4)").style.display = ((game.shopBought[0]) ? "block" : "none");
-  $(".program:nth-of-type(5)").style.display = ((game.shopBought[2]) ? "block" : "none");
-  $(".program:nth-of-type(6)").style.display = ((game.shopBought[3]) ? "block" : "none");
-  $(".program:nth-of-type(7)").style.display = ((game.researchLevel[1]>=1) ? "block" : "none");
+  setDisplay($(".program:nth-of-type(4)"), ((game.shopBought[0]) ? "block" : "none"));
+  setDisplay($(".program:nth-of-type(5)"), ((game.shopBought[2]) ? "block" : "none"));
+  setDisplay($(".program:nth-of-type(6)"), ((game.shopBought[3]) ? "block" : "none"));
+  setDisplay($(".program:nth-of-type(7)"), ((game.researchLevel[1]>=1) ? "block" : "none"));
 
   // grid
   renderGrid();
@@ -187,50 +190,53 @@ function renderShop() {
   for (var i = 0; i < 5; i++) {
     var infoObj = shopItems[i][Math.min(game.shopBought[i], shopItems[i].length-1)];
     if (typeof infoObj == "undefined") continue;
-    $(".shopItem:nth-of-type(" + (i+1) + ") > .itemName").innerHTML = infoObj.itemName;
-    $(".shopItem:nth-of-type(" + (i+1) + ") > .itemCost > .itemCostNum").innerHTML = dNotation(infoObj.itemCost, 4) + '$';
-    $(".shopItem:nth-of-type(" + (i+1) + ") > .itemDesc").innerHTML = infoObj.itemDesc;
-    $(".shopItem:nth-of-type(" + (i+1) + ")").className = ((calcShopMax()[i] == game.shopBought[i]) ? "shopItem bought" : "shopItem");
+    var itemEl = $(".shopItem:nth-of-type(" + (i+1) + ")");
+    setHTML($(".shopItem:nth-of-type(" + (i+1) + ") > .itemName"), infoObj.itemName);
+    setHTML($(".shopItem:nth-of-type(" + (i+1) + ") > .itemCost > .itemCostNum"), dNotation(infoObj.itemCost, 4) + '$');
+    setHTML($(".shopItem:nth-of-type(" + (i+1) + ") > .itemDesc"), infoObj.itemDesc);
+    setClassName(itemEl, ((calcShopMax()[i] == game.shopBought[i]) ? "shopItem bought" : "shopItem"));
   }
   for (var i = 0; i < 5; i++) {
-    $(".shopBox:nth-of-type(2) > .shopItem:nth-of-type(" + (i+1) + ") > .itemCost > .itemCostNum").innerHTML = dNotation(calcShopCost(i+5, game.shopBought[i+5]), 5);
+    setHTML($(".shopBox:nth-of-type(2) > .shopItem:nth-of-type(" + (i+1) + ") > .itemCost > .itemCostNum"), dNotation(calcShopCost(i+5, game.shopBought[i+5]), 5));
   }
-  $("#cpuHz").innerHTML = notationSI(calcCPU(), 0);
-  $("#cpuSpeed").innerHTML = dNotation(calcCpuUpgradeEffect(), 4, 1);
+  setHTML($("#cpuHz"), notationSI(calcCPU(), 0));
+  setHTML($("#cpuSpeed"), dNotation(calcCpuUpgradeEffect(), 4, 1));
 }
 function renderOption() {
   for (var i = 0; i < 3; i++) {
-    $('#optionToggle' + i).className = 'optionBtn' + ((game.optionToggle[i]) ? '' : ' disabled');
+    setClassName($('#optionToggle' + i), 'optionBtn' + ((game.optionToggle[i]) ? '' : ' disabled'));
   }
 }
 function renderBasicInfo() {
-  $('#basicInfo').innerHTML = `Number: ${dNotation(game.number, 2, 0)} / ${dNotation(game.base.pow(game.digits), 2, 0)}`;
-  $('#basicInfo').innerHTML += `<br>Digit: ${dNotation(game.digits, 2, 0)} / ${dNotation(calcMaxDigit(), 2, 0)} ${!singularityBoosts.DigitBoost.eq(0)?`(+${dNotation(singularityBoosts.DigitBoost.floor(0), 2, 0)})`:""}`;
-  $('#basicInfo').innerHTML += `<br>Base: ${dNotation(game.base, 2, 0)} / ${dNotation(Math.max(game.base, calcMaxBase()), 2, 0)} ${!singularityBoosts.BaseBoost.eq(0)?`(+${dNotation(singularityBoosts.BaseBoost.floor(0), 2, 0)})`:""}`
-
+  var txt = `Number: ${dNotation(game.number, 2, 0)} / ${dNotation(game.base.pow(game.digits), 2, 0)}`;
+  txt += `<br>Digit: ${dNotation(game.digits, 2, 0)} / ${dNotation(calcMaxDigit(), 2, 0)} ${!singularityBoosts.DigitBoost.eq(0)?`(+${dNotation(singularityBoosts.DigitBoost.floor(0), 2, 0)})`:""}`;
+  txt += `<br>Base: ${dNotation(game.base, 2, 0)} / ${dNotation(Math.max(game.base, calcMaxBase()), 2, 0)} ${!singularityBoosts.BaseBoost.eq(0)?`(+${dNotation(singularityBoosts.BaseBoost.floor(0), 2, 0)})`:""}`
+  setHTML($('#basicInfo'), txt);
 }
 function renderStat() {
-  $("#statsText").innerHTML = `You've played this game for ${timeNotation((new Date().getTime()-game.startTime)/1000)}`;
-  if (game.t2toggle) $("#statsText").innerHTML += `<br><br>You've done Reboot ${dNotation(game.t2resets, 4, 0)} times`;
-  if (game.t2toggle) $("#statsText").innerHTML += `<br>You spent ${timeNotation((new Date().getTime()-game.rebootTime)/1000)} in this Reboot`;
-  if (game.t3toggle) $("#statsText").innerHTML += `<br><br>You've done Quantum ${dNotation(game.t3resets, 4, 0)} times`;
-  if (game.t3toggle) $("#statsText").innerHTML += `<br>You spent ${timeNotation((new Date().getTime()-game.quantumTime)/1000)} in this Quantum`;
-  if (game.t4toggle) $("#statsText").innerHTML += `<br><br>You've gone Singularity ${dNotation(game.t4resets, 4, 0)} times`;
-  if (game.t4toggle) $("#statsText").innerHTML += `<br>You spent ${timeNotation((new Date().getTime()-game.singularityTime)/1000)} in this Singularity`;
-  if (game.t5toggle) $("#statsText").innerHTML += `<br><br>You've gone Infinity ${dNotation(game.t5resets, 4, 0)} times`;
-  if (game.t5toggle) $("#statsText").innerHTML += `<br>You spent ${timeNotation((new Date().getTime()-game.t5resetTime)/1000)} in this Infinity`;
-  if (game.t5toggle) $("#statsText").innerHTML += `<br>Your fast Infinity is ${timeNotation((game.t5record)/1000)} / ${dNotation(D.max(5, game.bestIp), 4, 0)} IP`;
+  var txt = `You've played this game for ${timeNotation((new Date().getTime()-game.startTime)/1000)}`;
+  if (game.t2toggle) txt += `<br><br>You've done Reboot ${dNotation(game.t2resets, 4, 0)} times`;
+  if (game.t2toggle) txt += `<br>You spent ${timeNotation((new Date().getTime()-game.rebootTime)/1000)} in this Reboot`;
+  if (game.t3toggle) txt += `<br><br>You've done Quantum ${dNotation(game.t3resets, 4, 0)} times`;
+  if (game.t3toggle) txt += `<br>You spent ${timeNotation((new Date().getTime()-game.quantumTime)/1000)} in this Quantum`;
+  if (game.t4toggle) txt += `<br><br>You've gone Singularity ${dNotation(game.t4resets, 4, 0)} times`;
+  if (game.t4toggle) txt += `<br>You spent ${timeNotation((new Date().getTime()-game.singularityTime)/1000)} in this Singularity`;
+  if (game.t5toggle) txt += `<br><br>You've gone Infinity ${dNotation(game.t5resets, 4, 0)} times`;
+  if (game.t5toggle) txt += `<br>You spent ${timeNotation((new Date().getTime()-game.t5resetTime)/1000)} in this Infinity`;
+  if (game.t5toggle) txt += `<br>Your fast Infinity is ${timeNotation((game.t5record)/1000)} / ${dNotation(D.max(5, game.bestIp), 4, 0)} IP`;
+  setHTML($("#statsText"), txt);
 }
 function renderCalcDebugInfo() {
-  $("#debugInfoArea").style.display = game.optionToggle[1] ? "block" : "none";
+  setDisplay($("#debugInfoArea"), game.optionToggle[1] ? "block" : "none");
   if (!game.optionToggle[1]) return;
-  tpsRecording++;
   if (game.tLast-lastTpsRecord > 1000) {
     lastTpsRecord = game.tLast;
     tps.push(tpsRecording);
     if (tps.length >= 10) tps.splice(0, 1);
     tpsRecording = 0;
-    $("#debugInfoArea").innerHTML = "TPS: " + tps.reduce((a, b) => (a+b)/2, 0).toFixed(0);
+    $("#debugInfoArea").innerHTML = "TPS: " + tps.reduce((a, b) => (a+b)/2, 0).toFixed(0)
+      + " | calc " + calcMsAvg.toFixed(2) + "ms | render " + renderMsAvg.toFixed(2) + "ms"
+      + " | " + gameVersion;
   }
 }
 
@@ -270,6 +276,7 @@ function optionBtn(num) {
 }
 function setEffects() {
   // thanks RedMountain! :D
+  document.body.classList[game.optionToggle[0] ? "remove" : "add"]("noFx");  // animation.css: kills all CSS animations when OFF
   $('#rebootButton').style.animation = game.optionToggle[0] ? 'rebootButtonGlow linear 8s infinite' : 'none';
   $('#rebootButton').style.color = game.optionToggle[0] ? '' : '#49d124';
   $('#rebootButton').style.textShadow = game.optionToggle[0] ? '' : '0 0 0.4vh #49d124';
@@ -283,6 +290,7 @@ function setEffects() {
 function setTheme() {
   document.getElementById("compactCssElement").href = themeUrls[game.theme];
   document.getElementById("themeBtn").innerHTML = `Theme: ${themeName[game.theme]}`;
+  gridSizeDirty = true;   // themes can change layout; the grid re-measures lazily (singularity.js)
 }
 function setNotation() {
   document.getElementById("notationBtn").innerHTML = `Notation: ${notationNames[game.notation]}`;
@@ -290,6 +298,7 @@ function setNotation() {
 function basicInits() {
   setTheme();
   setNotation();
+  setEffects();   // apply the saved effects state on load (body.noFx etc. — previously only ran when toggled)
 }
 function calcToggleTabs() {
   if (calcRPGain().gte(1)) game.t2toggle = 1;
