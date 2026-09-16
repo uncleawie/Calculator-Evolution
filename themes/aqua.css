@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=B612+Mono&display=swap');
+/* B612 Mono is self-hosted locally via ../fonts.css (offline copy — original @import removed) */
 * {
     font-family: 'B612 Mono', monospace;
 }

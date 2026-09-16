@@ -1,0 +1,21 @@
+/* Self-hosted fonts for the offline copy of Calculator Evolution.
+   Replaces the fonts.googleapis.com stylesheet link from the original page. */
+
+/* Weight 400 only — same as what the live page got from the Google Fonts CDN.
+   <b> text gets browser-synthesized bold, exactly as on the original site. */
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/roboto-mono.woff2') format('woff2');
+}
+
+/* Used by themes/aqua.css */
+@font-face {
+  font-family: 'B612 Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/b612-mono.woff2') format('woff2');
+}
